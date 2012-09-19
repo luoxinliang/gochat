@@ -40,27 +40,34 @@ func getUser(userName string) *User {
 func (user *User) Login(u *User, reply *Reply) error {
 	uu := getUser(u.UserName)
 	if uu != nil {
-		reply.State = 0
-		reply.Content = "Username was used,change another one!"
+		reply.StateCode = 503
+		reply.Error = "Username was used,change another one!"
 		return errors.New("Username was used.Login failed")
 	}
 	userLogin(u)
-	reply.State = 1
+	reply.StateCode = 200
 	reply.Content = "Login Success!"
 	return nil
 }
 
 func (user *User) Logout(userName string, reply *Reply) error {
 	delete(OnlineUsers, userName)
-	reply.State = 1
+	if getUser(userName) != nil {
+		reply.StateCode = 503
+		reply.Error = "Logout fail!"
+		return errors.New("Logout fail!")
+	}
+	reply.StateCode = 200
 	reply.Content = "Logout success !"
 	return nil
 }
 
 func (user *User)SendTo(message *Message,reply *Reply) error {
-	sendMsgToUser(message)
-	reply.State = 1
-	reply.Content = "sended message to the reciever"
+	fmt.Println(message.From,message.To,message.Content)
+	reply = sendMsgToUser(message)
+	if reply.StateCode != 200 {
+		return errors.New(reply.Error)
+	}
 	return nil
 }
 
