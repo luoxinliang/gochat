@@ -8,8 +8,7 @@
 package client
 
 import (
-//	"errors"
-//	"fmt"
+	"fmt"
 	"net/rpc"
 )
 
@@ -20,53 +19,11 @@ type User struct {
 	CurPort   string
 }
 
-//var OnlineUsers = make(map[string] *User)
-//
-//func userLogin(u *User) {
-//	OnlineUsers[u.UserName] = u
-//	fmt.Sprintf("%s logined,Ip: %s,Port: %s",u.UserName,u.CurIp,u.CurPort)
-//	fmt.Sprintf("Now total %d users online",len(OnlineUsers))
-//}
-//
-//func getUser(userName string) *User {
-//	u, ok := OnlineUsers[userName]
-//	if ok {
-//		return u
-//	}
-//	return nil
-//}
-
-//func (user *User) Login(u *User, reply *Reply) error {
-//	uu := getUser(u.UserName)
-//	if uu != nil {
-//		reply.State = 0
-//		reply.Content = "Username was used,change another one!"
-//		return errors.New("Username was used.Login failed")
-//	}
-//	userLogin(u)
-//	reply.State = 1
-//	reply.Content = "Login Success!"
-//	return nil
-//}
-//
-//func (user *User) Logout(userName string, reply *Reply) error {
-//	delete(OnlineUsers, userName)
-//	reply.State = 1
-//	reply.Content = "Logout success !"
-//	return nil
-//}
-
-//func (user *User)SendTo(message *Message,reply *Reply) error {
-//	sendMsgToUser(message)
-//	reply.State = 1
-//	reply.Content = "sended message to the reciever"
-//	return nil
-//}
-
 func (user *User)ShowMessage(message *Message,reply *Reply) error {
-//	sendMsgToUser(message)
+	fmt.Printf("%s recieved a message from %s.Content:%s",message.To.UserName,message.From.UserName,message.Content)
+	fmt.Println()
 	reply.StateCode = 200
-	reply.Content = "sended message to the reciever"
+	reply.Content = "Reciever recieved the message."
 	return nil
 }
 
