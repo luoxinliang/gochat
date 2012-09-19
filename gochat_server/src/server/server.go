@@ -21,7 +21,7 @@ import (
 const (
 	TCP         = "tcp"
 	SERVER_IP   = "127.0.0.1"
-	SERVER_PORT = "9180" //服务器默认端口 9180
+	SERVER_PORT = "9180"            //服务器默认端口 9180
 	SERVER_ADDR = SERVER_IP + ":" + SERVER_PORT
 )
 
@@ -32,18 +32,18 @@ type Message struct {
 }
 
 type Reply struct {
-	State   int8
-	Content string
+	StateCode   int32
+	Content     string
+	Error       string
 }
 
-func sendMsgToUser(message *Message) *Reply {
-	reply := &Reply{}
+func sendMsgToUser(message *Message) (reply *Reply)  {
 	toUserName := message.To.UserName
 	toUser := getUser(toUserName)
 	if toUser == nil {
-		reply.State = 0
-		reply.Content = "sendMsgToUser fail: toUser not exsist!"
-		return nil
+		reply.StateCode = 503
+		reply.Error = "sendMsgToUser fail: toUser not exsist!"
+		return reply
 	}
 	method := "User.ShowMessage"
 	replyCall := callClientUser(toUser, method, message, &Reply{})
@@ -52,33 +52,38 @@ func sendMsgToUser(message *Message) *Reply {
 }
 
 //服务器向在线用户发信息
-func sendMsg(args []string) *Reply {
-	reply := &Reply{}
+func sendMsg(args []string) (reply *Reply)  {
 	if len(args) != 3 {
 		fmt.Println("Need 3 args: <method> <to-user-name> <message-content>")
-		return nil
+		reply.StateCode = 503
+		reply.Error = "Args error"
+		return reply
 	}
 	toUserName := args[1]
 	messageContent := args[2]
 	toUser := getUser(toUserName)
 	if toUser == nil {
-		reply.State = 0
-		reply.Content = "SendMsg failed: toUser not exists..."
+		reply.StateCode = 503
+		reply.Error = "SendMsg failed: toUser not exists..."
 		return reply
 	}
 	message := &Message{To:toUser, Content:messageContent}
 	return sendMsgToUser(message)
 }
 
-func startAccept(args []string) *Reply {
+func startAccept(args []string) (reply *Reply) {
 	if len(args) != 1 {
 		fmt.Println("Need one args <method>")
-		return nil
+		reply.StateCode = 503
+		reply.Error = "Args error"
+		return reply
 	}
 	l, e := net.Listen(TCP, SERVER_ADDR)
 	if e != nil {
 		fmt.Println("Listen error", e)
-		return nil
+		reply.StateCode = 503
+		reply.Error = "Listen error"
+		return reply
 	}
 
 	fmt.Println("Server: listened on PORT  ", SERVER_PORT)
@@ -107,7 +112,7 @@ func startAccept(args []string) *Reply {
 
 }
 
-//启动服务器，默认端口8888。必须在客户端启动前启动服务器
+//启动服务器，默认端口9180。必须在客户端启动前启动服务器
 func Start() {
 	r := bufio.NewReader(os.Stdin)
 	handlers := getCommandHandler()
