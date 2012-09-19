@@ -21,7 +21,7 @@ import (
 const (
 	TCP         = "tcp"
 	SERVER_IP   = "127.0.0.1"
-	SERVER_PORT = "9180" //服务器默认端口 9180
+	SERVER_PORT = "9180"          //服务器默认端口 9180
 	SERVER_ADDR = SERVER_IP + ":" + SERVER_PORT
 	CLIENT_IP   = "127.0.0.1"
 )
@@ -43,20 +43,28 @@ type Reply struct {
 
 //登录
 func login(args []string) (reply *Reply) {
+	reply = &Reply{}
 	if len(args) != 2 {
 		fmt.Println("Need 2 args <method> <username>")
 		reply.StateCode = 503
 		reply.Error = "Args error"
 		return
 	}
+	if port == "" {
+		fmt.Println("Client not started.Should start client first!")
+		reply.StateCode = 503
+		reply.Error = "Client not started  error"
+		return
+	}
 	userName := args[1]
+	user := &User{UserName:userName,CurIp:CLIENT_IP,CurPort:port}
 	method := "User.Login"
-	replyCall := callServer(method, userName, &Reply{})
+	replyCall := callServer(method, user, &Reply{})
 	result := <-replyCall.Done
 	reply = result.Reply.(*Reply)
 	if reply.StateCode == 200 {
 		fmt.Println("Login success!")
-		curUser = &User{UserName:userName,CurIp:CLIENT_IP,CurPort:port}
+		curUser = user
 	} else {
 		fmt.Println("Login fail! Error msg:",reply.Error)
 	}
@@ -65,8 +73,9 @@ func login(args []string) (reply *Reply) {
 
 //向用户发送消息
 func sendTo(args []string) (reply *Reply) {
+	reply = &Reply{}
 	if len(args) != 3 {
-		fmt.Println("Need 3 args <method> <username>")
+		fmt.Println("Need 3 args <method> <to-username> <content>")
 		reply.StateCode = 503
 		reply.Error = "Args error"
 		return
@@ -85,11 +94,6 @@ func sendTo(args []string) (reply *Reply) {
 	replyCall := callServer(method, message, &Reply{})
 	result := <-replyCall.Done
 	reply = result.Reply.(*Reply)
-	if reply.StateCode == 200 {
-		fmt.Println("sendTo success!")
-	} else {
-		fmt.Println("sendTo fail! Error msg:",reply.Error)
-	}
 	return
 }
 
@@ -107,8 +111,8 @@ func startAccept(args []string) *Reply {
 		return nil
 	}
 	port = args[1]
-	clinetAddr := getClientAddr()
-	l, e := net.Listen(TCP, clinetAddr)
+	clientAddr := getClientAddr()
+	l, e := net.Listen(TCP, clientAddr)
 	if e != nil {
 		fmt.Println("Listen error", e)
 		return nil
@@ -125,6 +129,7 @@ func startAccept(args []string) *Reply {
 				continue
 			}
 			if conn != nil {
+				fmt.Println("Accept From:", conn.RemoteAddr())
 				go func() {
 					rpc.ServeCodec(jsonrpc.NewServerCodec(conn))
 					conn.Close()
