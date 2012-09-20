@@ -9,7 +9,7 @@
     command> start
     则启动服务器了
   
-  2.运行客户端（新的shell下）
+  2.运行客户端（新的终端下）
     cd gochat_client/src/ 
     go run main.go
   
